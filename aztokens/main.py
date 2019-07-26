@@ -1,3 +1,4 @@
+import click
 import json
 import os
 
@@ -12,10 +13,22 @@ def token_(t):
     }
 
 
-def main():
+def get_resource_filter(resource_substr):
+    if resource_substr is None:
+        return lambda _: True
+    def result(token):
+        return resource_substr in token['resource']
+    return result
+
+
+@click.argument('resource', required=False)
+@click.command()
+def main(resource):
     with open(TOKENS_PATH, 'r') as f:
         tokens = json.load(f)
 
-    token_data = list(token_(t) for t in tokens)
+    is_match = get_resource_filter(resource)
+
+    token_data = list(token_(t) for t in tokens if is_match(t))
 
     print(json.dumps(token_data, indent=2))
